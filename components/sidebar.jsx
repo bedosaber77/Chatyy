@@ -1,49 +1,62 @@
 "use client";
 import { useState } from "react";
-import { FiMessageSquare, FiSettings, FiUser } from "react-icons/fi";
-import { CiBrightnessUp } from "react-icons/ci";
-export default function Sidebar() {
-  const [selected, setSelected] = useState("messages");
+import Image from "next/image";
+import {
+  ChatBubbleLeftIcon,
+  UserGroupIcon,
+  Cog6ToothIcon,
+  ArrowRightOnRectangleIcon,
+} from "@heroicons/react/24/outline";
+import { signOut, useSession } from "next-auth/react";
+
+const Sidebar = ({ setActiveTab }) => {
+  const [selectedTab, setSelectedTab] = useState("chat");
+  const { data: session, status } = useSession();
+
+  const handleTabClick = (tab) => {
+    setSelectedTab(tab);
+    setActiveTab(tab);
+  };
 
   return (
-    <div className="w-16 h-screen bg-white-100 flex flex-col items-center py-4 border-r">
+    <div className="w-16 h-screen flex flex-col items-center bg-gray-100 py-4 border-r">
       <button
         className={`p-3 rounded-lg ${
-          selected === "messages"
-            ? "bg-blue-500 text-white"
-            : "hover:bg-gray-200"
+          selectedTab === "chat" ? "bg-gray-300" : "hover:bg-gray-200"
         }`}
-        onClick={() => setSelected("messages")}
+        onClick={() => handleTabClick("chat")}
       >
-        <FiMessageSquare size={24} />
+        <ChatBubbleLeftIcon className="h-6 w-6 text-gray-600" />
       </button>
       <button
         className={`p-3 rounded-lg mt-4 ${
-          selected === "users" ? "bg-blue-500 text-white" : "hover:bg-gray-200"
+          selectedTab === "friends" ? "bg-gray-300" : "hover:bg-gray-200"
         }`}
-        onClick={() => setSelected("users")}
+        onClick={() => handleTabClick("friends")}
       >
-        <FiUser size={24} />
-      </button>
-      <button
-        className={`p-3 rounded-lg mt-auto
-            text-white" : "hover:bg-gray-200"
-        `}
-        onClick={() => setSelected("theme")}
-      >
-        <CiBrightnessUp size={24} />
+        <UserGroupIcon className="h-6 w-6 text-gray-600" />
       </button>
 
-      <button
-        className={`p-3 rounded-lg mb-4 ${
-          selected === "settings"
-            ? "bg-blue-500 text-white"
-            : "hover:bg-gray-200"
-        }`}
-        onClick={() => setSelected("settings")}
-      >
-        <FiSettings size={24} />
+      <button className="p-3 rounded-lg hover:bg-gray-200 mt-auto mb-4">
+        <Cog6ToothIcon className="h-6 w-6 text-gray-600" />
       </button>
+      <button
+        className="p-3 rounded-lg hover:bg-gray-200"
+        onClick={() => signOut()}
+      >
+        <ArrowRightOnRectangleIcon className="h-6 w-6 text-gray-600" />
+      </button>
+      {status === "authenticated" && (
+        <Image
+          src={session.user.image || "/default-avatar.png"} // ✅ Use a default avatar if image is null
+          alt="User Avatar"
+          width={32}
+          height={32}
+          className="rounded-full mt-2"
+        />
+      )}
     </div>
   );
-}
+};
+
+export default Sidebar;
