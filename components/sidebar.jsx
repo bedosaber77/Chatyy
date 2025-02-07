@@ -12,7 +12,6 @@ import { signOut, useSession } from "next-auth/react";
 const Sidebar = ({ setActiveTab }) => {
   const [selectedTab, setSelectedTab] = useState("chat");
   const { data: session, status } = useSession();
-
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
     setActiveTab(tab);
