@@ -5,9 +5,29 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function LoginForm({ className, ...props }) {
+  const router = useRouter();
+  const [email, setemail] = useState("");
+  const [password, setpassword] = useState("");
+  const [error, setError] = useState(null);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      router.push("/");
+    }
+  };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <form>
@@ -29,6 +49,11 @@ export function LoginForm({ className, ...props }) {
               </a>
             </div>
           </div>
+
+          {error && (
+            <div className="text-red-500 text-sm text-center">{error}</div>
+          )}
+
           <div className="flex flex-col gap-6">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -37,15 +62,17 @@ export function LoginForm({ className, ...props }) {
                 type="email"
                 placeholder="m@example.com"
                 required
+                onChange={(e) => setemail(e.target.value)}
               />
               <Input
                 id="password"
                 type="password"
                 placeholder="Password"
                 required
+                onChange={(e) => setpassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" onClick={handleLogin}>
               Login
             </Button>
           </div>
