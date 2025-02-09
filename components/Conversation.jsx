@@ -1,36 +1,28 @@
-"use client";
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
 import loading from "../app/loading";
+import { authOptions } from "@/lib/auth";
+const Conversations = async ({ onSelect }) => {
+  const session = await getServerSession(authOptions);
+  //useEffect(() => {
+  if (session?.user?.id) {
+    const fetchConversations = async () => {
+      try {
+        const res = await fetch(`/api/conversation?userId=${session.user.id}`);
+        if (!res.ok) throw new Error("Failed to fetch conversations");
 
-const Conversations = ({ onSelect }) => {
-  const { data: session, status } = useSession();
-  const [conversations, setConversations] = useState([]);
-  const [stillloading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+        const data = await res.json();
+        setConversations(data);
+      } catch (err) {
+        console.error("Error fetching conversations:", err);
+        setError("Failed to load conversations.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    if (status === "authenticated" && session?.user?.id) {
-      const fetchConversations = async () => {
-        try {
-          const res = await fetch(
-            `/api/conversation?userId=${session.user.id}`
-          );
-          if (!res.ok) throw new Error("Failed to fetch conversations");
-
-          const data = await res.json();
-          setConversations(data);
-        } catch (err) {
-          console.error("Error fetching conversations:", err);
-          setError("Failed to load conversations.");
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchConversations();
-    }
-  }, [status, session?.user?.id]); // ✅ Runs when session status or user ID changes
+    fetchConversations();
+  }
+  //}, [status, session?.user?.id]); // ✅ Runs when session status or user ID changes
 
   if (error) return <p className="text-red-500">{error}</p>;
 

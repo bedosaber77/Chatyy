@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 

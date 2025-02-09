@@ -1,12 +1,11 @@
-"use client";
+import Sidebar from "@/components/sidebar";
 import "./globals.css";
-import { SessionProvider } from "next-auth/react";
+import { UserPhoto } from "@/components/userPhoto";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <SessionProvider>{children}</SessionProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

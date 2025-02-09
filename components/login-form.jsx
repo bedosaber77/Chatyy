@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -25,7 +25,7 @@ export function LoginForm({ className, ...props }) {
     if (result?.error) {
       setError(result.error);
     } else {
-      router.push("/");
+      router.push("/conversations");
     }
   };
   return (
@@ -85,7 +85,9 @@ export function LoginForm({ className, ...props }) {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => signIn("google", { callbackUrl: "/" })}
+              onClick={() =>
+                signIn("google", { callbackUrl: "/conversations" })
+              }
               type="button"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
