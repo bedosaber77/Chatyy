@@ -6,9 +6,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding database...");
 
+  await prisma.chatUser.deleteMany();
+  await prisma.message.deleteMany();
+  await prisma.chat.deleteMany();
+  await prisma.user.deleteMany();
+
   const hashedPassword = await bcrypt.hash("password123", 10);
 
-  const user1 = await prisma.user.create({
+  const alice = await prisma.user.create({
     data: {
       name: "Alice",
       email: "alice@example.com",
@@ -17,7 +22,7 @@ async function main() {
     },
   });
 
-  const user2 = await prisma.user.create({
+  const bob = await prisma.user.create({
     data: {
       name: "Bob",
       email: "bob@example.com",
@@ -26,37 +31,33 @@ async function main() {
     },
   });
 
-  const conversation = await prisma.conversation.create({
+  const chat = await prisma.chat.create({
     data: {},
   });
 
-  await prisma.userConversations.createMany({
+  // Create join records (ChatUser) to connect users with the chat
+  await prisma.chatUser.createMany({
     data: [
-      {
-        userId: user1.id,
-        conversationId: conversation.id,
-      },
-      {
-        userId: user2.id,
-        conversationId: conversation.id,
-      },
+      { chatId: chat.id, userId: alice.id },
+      { chatId: chat.id, userId: bob.id },
     ],
   });
-  await prisma.message.createMany({
-    data: [
-      {
-        text: "Hey Bob, how are you?",
-        senderId: user1.id,
-        conversationId: conversation.id,
-        createdAt: new Date(),
-      },
-      {
-        text: "Hey Alice! I'm good, how about you?",
-        senderId: user2.id,
-        conversationId: conversation.id,
-        createdAt: new Date(),
-      },
-    ],
+
+  // Create some Messages in the chat
+  const message1 = await prisma.message.create({
+    data: {
+      text: "Hello, this is Alice!",
+      chat: { connect: { id: chat.id } },
+      user: { connect: { id: alice.id } },
+    },
+  });
+
+  const message2 = await prisma.message.create({
+    data: {
+      text: "Hi, Alice! This is Bob.",
+      chat: { connect: { id: chat.id } },
+      user: { connect: { id: bob.id } },
+    },
   });
 
   console.log("✅ Database seeded");
