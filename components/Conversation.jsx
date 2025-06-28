@@ -1,10 +1,17 @@
-import { getServerSession } from "next-auth";
+"use client";
+
+import { useSession } from "next-auth/react";
+import { useEffect, useState, useRef } from "react";
 import loading from "../app/loading";
-import { authOptions } from "@/lib/auth";
-const Conversations = async ({ onSelect }) => {
-  const session = await getServerSession(authOptions);
-  //useEffect(() => {
-  if (session?.user?.id) {
+
+const Conversations = ({ onSelect = () => {} }) => {
+  const { data: session, status } = useSession();
+  const [conversations, setConversations] = useState([]);
+  const [error, setError] = useState(null);
+  const [stillloading, setLoading] = useState(true);
+  const hasFetched = useRef(false);
+
+  useEffect(() => {
     const fetchConversations = async () => {
       try {
         const res = await fetch(`/api/conversation?userId=${session.user.id}`);
@@ -12,6 +19,7 @@ const Conversations = async ({ onSelect }) => {
 
         const data = await res.json();
         setConversations(data);
+        console.log("Conversations fetched:", data);
       } catch (err) {
         console.error("Error fetching conversations:", err);
         setError("Failed to load conversations.");
@@ -20,9 +28,14 @@ const Conversations = async ({ onSelect }) => {
       }
     };
 
-    fetchConversations();
-  }
-  //}, [status, session?.user?.id]); // ✅ Runs when session status or user ID changes
+    if (session?.user?.id && !hasFetched.current) {
+      hasFetched.current = true;
+      setLoading(true);
+      fetchConversations();
+    }
+  }, [session]);
+
+  if (status === "loading" || stillloading) return loading();
 
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -30,9 +43,7 @@ const Conversations = async ({ onSelect }) => {
     <div className="w-72 h-screen bg-white border-r flex flex-col">
       <h2 className="text-lg font-bold p-4 border-b">Conversations</h2>
       <div className="flex flex-col">
-        {stillloading ? (
-          loading()
-        ) : conversations.length === 0 ? (
+        {conversations.length === 0 ? (
           <p className="p-4 text-gray-500">No conversations yet.</p>
         ) : (
           conversations.map((chat) => (

@@ -22,6 +22,11 @@ export async function GET(req) {
               orderBy: { createdAt: "desc" },
               take: 1,
             },
+            chatUsers: {
+              include: {
+                user: true,
+              },
+            },
           },
         },
       },
@@ -29,14 +34,16 @@ export async function GET(req) {
 
     const formattedConversations = conversations.map((chatUser) => {
       const chat = chatUser.chat;
+      const participants = chat.chatUsers.map((cu) => cu.user);
+      const otherUser = participants.find((u) => u.id !== userId);
       return {
         id: chat.id,
-        name: chat.name,
+        name: otherUser.name || "NAN",
         lastMessage: chat.messages[0]?.text || "No messages",
       };
     });
 
-    return NextResponse.json(conversations);
+    return NextResponse.json(formattedConversations);
   } catch (error) {
     console.error("Error fetching conversations:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

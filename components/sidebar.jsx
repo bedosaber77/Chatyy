@@ -9,6 +9,7 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
+import { signOut } from "next-auth/react";
 
 const Sidebar = ({ children }) => {
   const pathname = usePathname();
@@ -44,11 +45,12 @@ const Sidebar = ({ children }) => {
       </Link>
 
       {/* Sign Out Button */}
-      <form action="/api/auth/signout" method="POST">
-        <button type="submit" className="p-3 rounded-lg hover:bg-gray-200">
-          <ArrowRightOnRectangleIcon className="h-6 w-6 text-gray-600" />
-        </button>
-      </form>
+      <button
+        onClick={() => signOut({ callbackUrl: "/login" })}
+        className="p-3 rounded-lg hover:bg-gray-200"
+      >
+        <ArrowRightOnRectangleIcon className="h-6 w-6 text-gray-600" />
+      </button>
 
       {/* Extra children (e.g., user profile) */}
       {children}
