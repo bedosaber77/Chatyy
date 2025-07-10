@@ -1,9 +1,8 @@
-// ws-server.js
-const { Server } = require("socket.io");
+const sokcetio = require("socket.io");
 const http = require("http");
 
 const server = http.createServer();
-const io = new Server(server, {
+const io = sokcetio(server, {
   cors: {
     origin: "*", // or your frontend domain
     methods: ["GET", "POST"],
@@ -11,7 +10,7 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("🟢 Socket connected:", socket.id);
+  console.log("Socket connected:", socket.id);
 
   socket.on("newMessage", (msg) => {
     // broadcast to others
@@ -19,10 +18,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("🔌 Disconnected:", socket.id);
+    console.log("Disconnected:", socket.id);
   });
 });
 
 server.listen(4000, () => {
-  console.log("✅ WebSocket Server running on http://localhost:4000");
+  console.log("WebSocket Server running on http://localhost:4000");
 });

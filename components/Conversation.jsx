@@ -3,13 +3,18 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import loading from "../app/loading";
+import { UserPhoto } from "./userPhoto";
 
-const Conversations = ({ onSelect = () => {} }) => {
+const Conversations = ({ onSelect }) => {
   const { data: session, status } = useSession();
   const [conversations, setConversations] = useState([]);
   const [error, setError] = useState(null);
   const [stillloading, setLoading] = useState(true);
   const hasFetched = useRef(false);
+
+  const handleChatSelection = (chatId, chatName, chatImg) => {
+    onSelect(chatId, chatName, chatImg);
+  };
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -40,7 +45,7 @@ const Conversations = ({ onSelect = () => {} }) => {
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="w-72 h-screen bg-white border-r flex flex-col">
+    <div className="h-screen bg-white border-r flex flex-col">
       <h2 className="text-lg font-bold p-4 border-b">Conversations</h2>
       <div className="flex flex-col">
         {conversations.length === 0 ? (
@@ -49,12 +54,18 @@ const Conversations = ({ onSelect = () => {} }) => {
           conversations.map((chat) => (
             <button
               key={chat.id}
-              className="p-4 text-left hover:bg-gray-100 border-b"
-              onClick={() => onSelect(chat.id)}
+              className="p-4 text-left hover:bg-gray-100 border-b flex flex-row items-center gap-4"
+              onClick={() => {
+                console.log("Selected chat:", chat);
+                handleChatSelection(chat.id, chat.name, chat.image);
+              }}
             >
-              <div className="font-medium">{chat.name}</div>
-              <div className="text-sm text-gray-500">
-                {chat.lastMessage || "No messages yet"}
+              <UserPhoto img={chat.image} />
+              <div className="flex flex-col">
+                <div className="font-medium">{chat.name}</div>
+                <div className="text-sm text-gray-500">
+                  {chat.lastMessage || "No messages yet"}
+                </div>
               </div>
             </button>
           ))

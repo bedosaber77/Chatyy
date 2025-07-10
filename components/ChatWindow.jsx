@@ -3,10 +3,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { io } from "socket.io-client";
+import { UserPhoto } from "./userPhoto";
 
 let socket; // define socket outside to avoid multiple connections
 
-const ChatWindow = ({ chatId }) => {
+const ChatWindow = ({ chat, setChatId }) => {
   const { data: session } = useSession();
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
@@ -15,14 +16,10 @@ const ChatWindow = ({ chatId }) => {
 
   // Connect to socket server
   useEffect(() => {
-    socket = io("http://localhost:4000"); // 🔁 Change this to your WS server URL
-
-    socket.on("connect", () => {
-      console.log("🔌 Connected to WebSocket");
-    });
+    socket = io("http://localhost:4000");
 
     socket.on("newMessage", (msg) => {
-      if (msg.chatId === chatId) {
+      if (msg.chatId === chat.chatId) {
         setMessages((prev) => [...prev, msg]);
       }
     });
@@ -30,13 +27,13 @@ const ChatWindow = ({ chatId }) => {
     return () => {
       socket.disconnect();
     };
-  }, [chatId]);
+  }, [chat]);
 
   // Fetch existing messages from API
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await fetch(`/api/messages?chatId=${chatId}`);
+        const res = await fetch(`/api/messages?chatId=${chat.chatId}`);
         if (!res.ok) throw new Error("Failed to fetch messages");
 
         const data = await res.json();
@@ -46,8 +43,8 @@ const ChatWindow = ({ chatId }) => {
       }
     };
 
-    if (chatId) fetchMessages();
-  }, [chatId]);
+    if (chat.chatId) fetchMessages();
+  }, [chat]);
 
   // Auto scroll
   useEffect(() => {
@@ -59,7 +56,7 @@ const ChatWindow = ({ chatId }) => {
     if (!messageInput.trim()) return;
 
     const newMessage = {
-      chatId,
+      chatId: chat.chatId,
       userId: session.user.id,
       text: messageInput,
     };
@@ -75,7 +72,6 @@ const ChatWindow = ({ chatId }) => {
 
       const savedMessage = await res.json();
 
-      // 🔁 Emit to WebSocket
       socket.emit("newMessage", savedMessage);
 
       setMessages((prev) => [...prev, savedMessage]);
@@ -90,31 +86,65 @@ const ChatWindow = ({ chatId }) => {
 
   return (
     <div className="flex flex-col h-full">
+      <div className="flex flex-row p-4 border-b bg-white items-center w-full gap-6">
+        <button
+          className="text-gray-500 hover:text-gray-700"
+          onClick={() => {
+            setChatId(null);
+            setMessages([]);
+          }}
+        >
+          &larr;
+        </button>
+        <div className="flex flex-row items-center gap-3">
+          <UserPhoto img={chat.chatImg} />
+          <h2 className="text-lg font-bold mt-2">{chat.chatName}</h2>
+        </div>
+      </div>
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <p className="text-gray-500">No messages yet.</p>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, index) => {
             const isMe = msg.userId === session?.user?.id;
+            const currDate = new Date(msg.createdAt);
+            const prevDate =
+              index > 0 ? new Date(messages[index - 1].createdAt) : null;
+            const isNewDay =
+              !prevDate || currDate.toDateString() !== prevDate.toDateString();
+
+            const formattedDate = new Intl.DateTimeFormat("en-US", {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }).format(currDate);
+
             return (
-              <div
-                key={msg.id}
-                className={`flex ${isMe ? "justify-end" : "justify-start"} mb-2`}
-              >
+              <div key={msg.id}>
+                {isNewDay && (
+                  <div className="text-center my-4 text-sm text-gray-500">
+                    {formattedDate}
+                  </div>
+                )}
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-lg text-sm shadow ${
-                    isMe
-                      ? "bg-blue-500 text-white rounded-br-none"
-                      : "bg-gray-200 text-gray-800 rounded-bl-none"
-                  }`}
+                  className={`flex ${isMe ? "justify-end" : "justify-start"} mb-2`}
                 >
-                  <p>{msg.text}</p>
-                  <p className="text-xs mt-1 opacity-70">
-                    {new Date(msg.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
+                  <div
+                    className={`max-w-xs px-4 py-2 rounded-lg text-sm shadow ${
+                      isMe
+                        ? "bg-blue-500 text-white rounded-br-none"
+                        : "bg-gray-200 text-gray-800 rounded-bl-none"
+                    }`}
+                  >
+                    <p>{msg.text}</p>
+                    <p className="text-xs mt-1 opacity-70">
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
                 </div>
               </div>
             );

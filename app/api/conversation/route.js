@@ -40,6 +40,7 @@ export async function GET(req) {
         id: chat.id,
         name: otherUser.name || "NAN",
         lastMessage: chat.messages[0]?.text || "No messages",
+        image: otherUser.image || "/default-avatar.png",
       };
     });
 

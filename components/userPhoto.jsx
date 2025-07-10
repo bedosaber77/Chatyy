@@ -1,19 +1,19 @@
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth";
+"use client";
 import Image from "next/image";
-export async function UserPhoto() {
-  const session = await getServerSession(authOptions);
+import { useSession } from "next-auth/react";
+
+export function UserPhoto({ img }) {
+  const { data: session } = useSession();
+
+  const src = img || session?.user?.image || "/default-avatar.png";
+
   return (
-    <>
-      {session && (
-        <Image
-          src={session?.user?.image || "/default-avatar.png"}
-          alt="User Avatar"
-          width={32}
-          height={32}
-          className="rounded-full mt-2"
-        />
-      )}
-    </>
+    <Image
+      src={src}
+      alt="User Avatar"
+      width={32}
+      height={32}
+      className="rounded-full mt-2"
+    />
   );
 }
