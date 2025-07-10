@@ -19,31 +19,32 @@ const ChatPage = () => {
     setSelectedChatId(chatId);
     setSelectedChat((prev) => ({ ...prev, chatId })); // Update chatId in selectedChat
   };
-  console.log(isMobile);
   return (
     <>
       {isMobile ? (
         selectedChatId ? (
-          <ChatWindow chat={selectedChat} setChatId={SetSelectedChatId} />
+          <div className="flex h-screen">
+            <ChatWindow chat={selectedChat} setChatId={SetSelectedChatId} />
+          </div>
         ) : (
-          <div className="block w-full border-r">
-            <Conversation onSelect={handleChatSelection} />
+          <div className="flex h-screen">
+            <div className="block w-full border-r">
+              <Conversation onSelect={handleChatSelection} />
+            </div>
           </div>
         )
       ) : (
         <div className="flex h-screen">
-          {" "}
-          {/* 👈 full screen height */}
           <div className="hidden md:block w-72 border-r">
             <Conversation onSelect={handleChatSelection} />
           </div>
           <div className="flex-1 overflow-hidden">
-            {" "}
-            {/* 👈 allow chat to scroll inside */}
             {selectedChatId ? (
               <ChatWindow chat={selectedChat} setChatId={SetSelectedChatId} />
             ) : (
-              <div className="p-4 text-gray-500">Select a conversation</div>
+              <div className="p-4 text-gray-500 items-center">
+                Select a conversation
+              </div>
             )}
           </div>
         </div>
