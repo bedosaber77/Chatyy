@@ -56,7 +56,6 @@ const Conversations = ({ onSelect }) => {
               key={chat.id}
               className="p-4 text-left hover:bg-gray-100 border-b flex flex-row items-center gap-4"
               onClick={() => {
-                console.log("Selected chat:", chat);
                 handleChatSelection(chat.id, chat.name, chat.image);
               }}
             >

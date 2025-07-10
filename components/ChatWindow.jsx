@@ -4,17 +4,30 @@ import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { io } from "socket.io-client";
 import { UserPhoto } from "./userPhoto";
+import loading from "../app/loading"; // assumed to be a function/component returning JSX
 
-let socket; // define socket outside to avoid multiple connections
+let socket;
 
 const ChatWindow = ({ chat, setChatId }) => {
   const { data: session } = useSession();
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
   const [error, setError] = useState(null);
+  const [loadingState, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
 
-  // Connect to socket server
+  // Show center placeholder when no conversation is selected
+  if (!chat) {
+    return (
+      <div className="flex h-full w-full">
+        <div className="m-auto text-center text-gray-500 text-lg">
+          Select a conversation
+        </div>
+      </div>
+    );
+  }
+
+  // Socket connection
   useEffect(() => {
     socket = io("http://localhost:4000");
 
@@ -29,7 +42,7 @@ const ChatWindow = ({ chat, setChatId }) => {
     };
   }, [chat]);
 
-  // Fetch existing messages from API
+  // Fetch messages
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -40,6 +53,8 @@ const ChatWindow = ({ chat, setChatId }) => {
         setMessages(data);
       } catch (err) {
         setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -51,6 +66,7 @@ const ChatWindow = ({ chat, setChatId }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Send message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!messageInput.trim()) return;
@@ -71,22 +87,22 @@ const ChatWindow = ({ chat, setChatId }) => {
       if (!res.ok) throw new Error("Failed to send message");
 
       const savedMessage = await res.json();
-
       socket.emit("newMessage", savedMessage);
-
       setMessages((prev) => [...prev, savedMessage]);
       setMessageInput("");
     } catch (err) {
-      console.error("Send message error:", err);
       setError("Failed to send message.");
     }
   };
 
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (error) {
+    return <p className="text-red-500 p-4">{error}</p>;
+  }
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex flex-row p-4 border-b bg-white items-center w-full gap-6">
+      {/* Header */}
+      <div className="flex items-center gap-4 p-4 border-b bg-white">
         <button
           className="text-gray-500 hover:text-gray-700"
           onClick={() => {
@@ -96,85 +112,83 @@ const ChatWindow = ({ chat, setChatId }) => {
         >
           &larr;
         </button>
-        <div className="flex flex-row items-center gap-3">
-          <UserPhoto img={chat.chatImg} />
-          <h2 className="text-lg font-bold mt-2">{chat.chatName}</h2>
-        </div>
+        <UserPhoto img={chat.chatImg} />
+        <h2 className="text-lg font-bold">{chat.chatName}</h2>
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
-        {messages.length === 0 ? (
-          <p className="text-gray-500">No messages yet.</p>
+        {loadingState ? (
+          <div className="flex justify-center items-center h-full">
+            {loading()}
+          </div>
+        ) : messages.length === 0 ? (
+          <p className="text-gray-500 text-center">No messages yet.</p>
         ) : (
-          <>
-            {messages.map((msg, index) => {
-              const isMe = msg.userId === session?.user?.id;
-              const currDate = new Date(msg.createdAt);
-              const prevDate =
-                index > 0 ? new Date(messages[index - 1].createdAt) : null;
-              const isNewDay =
-                !prevDate ||
-                currDate.toDateString() !== prevDate.toDateString();
+          messages.map((msg, index) => {
+            const isMe = msg.userId === session?.user?.id;
+            const currDate = new Date(msg.createdAt);
+            const prevDate =
+              index > 0 ? new Date(messages[index - 1].createdAt) : null;
+            const isNewDay =
+              !prevDate || currDate.toDateString() !== prevDate.toDateString();
 
-              const formattedDate = new Intl.DateTimeFormat("en-US", {
-                weekday: "short",
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              }).format(currDate);
+            const formattedDate = currDate.toLocaleDateString("en-US", {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
 
-              return (
-                <div key={msg.id}>
-                  {isNewDay && (
-                    <div className="text-center my-4 text-sm text-gray-500">
-                      {formattedDate}
-                    </div>
-                  )}
+            return (
+              <div key={msg.id}>
+                {isNewDay && (
+                  <div className="text-center my-4 text-sm text-gray-500">
+                    {formattedDate}
+                  </div>
+                )}
+                <div
+                  className={`flex ${isMe ? "justify-end" : "justify-start"} mb-2`}
+                >
                   <div
-                    className={`flex ${isMe ? "justify-end" : "justify-start"} mb-2`}
+                    className={`max-w-xs px-4 py-2 rounded-lg text-sm shadow ${
+                      isMe
+                        ? "bg-blue-500 text-white rounded-br-none"
+                        : "bg-gray-200 text-gray-800 rounded-bl-none"
+                    }`}
                   >
-                    <div
-                      className={`max-w-xs px-4 py-2 rounded-lg text-sm shadow ${
-                        isMe
-                          ? "bg-blue-500 text-white rounded-br-none"
-                          : "bg-gray-200 text-gray-800 rounded-bl-none"
-                      }`}
-                    >
-                      <p>{msg.text}</p>
-                      <p className="text-xs mt-1 opacity-70">
-                        {new Date(msg.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
+                    <p>{msg.text}</p>
+                    <p className="text-xs mt-1 opacity-70">
+                      {currDate.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-
-            <form
-              ref={messagesEndRef}
-              onSubmit={handleSendMessage}
-              className="mt-4 flex"
-            >
-              <input
-                type="text"
-                className="flex-1 border rounded-l-lg px-4 py-2 focus:outline-none focus:ring"
-                placeholder="Type your message..."
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-              />
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
-              >
-                Send
-              </button>
-            </form>
-          </>
+              </div>
+            );
+          })
         )}
+        <div ref={messagesEndRef} />
       </div>
+
+      {/* Input */}
+      <form onSubmit={handleSendMessage} className="flex p-4 border-t bg-white">
+        <input
+          type="text"
+          className="flex-1 border rounded-l-lg px-4 py-2 focus:outline-none focus:ring"
+          placeholder="Type your message..."
+          value={messageInput}
+          onChange={(e) => setMessageInput(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
 };
