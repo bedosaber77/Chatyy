@@ -35,6 +35,22 @@ async function main() {
     data: {},
   });
 
+  await prisma.user.update({
+    where: { id: alice.id },
+    data: {
+      friends: {
+        push: bob.id, // Connect Alice with Bob as a friend
+      },
+    },
+  });
+  await prisma.user.update({
+    where: { id: bob.id },
+    data: {
+      friends: {
+        push: alice.id, // Connect Bob with Alice as a friend
+      },
+    },
+  });
   // Create join records (ChatUser) to connect users with the chat
   await prisma.chatUser.createMany({
     data: [

@@ -14,14 +14,16 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  password  String?
-  email     String     @unique
-  image     String?
-  createdAt DateTime   @default(now())
-  messages  Message[]
-  chatUsers ChatUser[] // Explicit join relation
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  password       String?
+  email          String     @unique
+  image          String?
+  createdAt      DateTime   @default(now())
+  friends        String[]   @db.ObjectId // Array of accepted friend user IDs
+  friendRequests String[]   @db.ObjectId // Array of pending friend request user IDs
+  messages       Message[]
+  chatUsers      ChatUser[] // Explicit join relation
 }
 
 model Chat {
