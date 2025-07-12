@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding database...");
 
+  // Clear existing data
   await prisma.chatUser.deleteMany();
   await prisma.message.deleteMany();
   await prisma.chat.deleteMany();
@@ -13,6 +14,7 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash("password123", 10);
 
+  // Create users
   const alice = await prisma.user.create({
     data: {
       name: "Alice",
@@ -31,27 +33,72 @@ async function main() {
     },
   });
 
-  const chat = await prisma.chat.create({
-    data: {},
+  const charlie = await prisma.user.create({
+    data: {
+      name: "Charlie",
+      email: "charlie@example.com",
+      password: hashedPassword,
+      image: "https://randomuser.me/api/portraits/men/2.jpg",
+    },
   });
 
+  const diana = await prisma.user.create({
+    data: {
+      name: "Diana",
+      email: "diana@example.com",
+      password: hashedPassword,
+      image: "https://randomuser.me/api/portraits/women/2.jpg",
+    },
+  });
+
+  // Set up mutual friendships
   await prisma.user.update({
     where: { id: alice.id },
     data: {
       friends: {
-        push: bob.id, // Connect Alice with Bob as a friend
+        set: [bob.id, charlie.id], // Alice is friends with Bob and Charlie
       },
     },
   });
+
   await prisma.user.update({
     where: { id: bob.id },
     data: {
       friends: {
-        push: alice.id, // Connect Bob with Alice as a friend
+        set: [alice.id], // Bob is friends with Alice
+      },
+      friendRequests: {
+        push: diana.id, // Diana sent Bob a friend request (pending)
       },
     },
   });
-  // Create join records (ChatUser) to connect users with the chat
+
+  await prisma.user.update({
+    where: { id: charlie.id },
+    data: {
+      friends: {
+        set: [alice.id], // Charlie is friends with Alice
+      },
+      friendRequests: {
+        push: diana.id, // Diana sent Charlie a friend request (pending)
+      },
+    },
+  });
+
+  await prisma.user.update({
+    where: { id: diana.id },
+    data: {
+      friendRequests: {
+        push: alice.id, // Diana sent Alice a friend request (pending)
+      },
+    },
+  });
+
+  // Create a chat for Alice and Bob to test chat-related relations
+  const chat = await prisma.chat.create({
+    data: {},
+  });
+
   await prisma.chatUser.createMany({
     data: [
       { chatId: chat.id, userId: alice.id },
@@ -59,16 +106,16 @@ async function main() {
     ],
   });
 
-  // Create some Messages in the chat
-  const message1 = await prisma.message.create({
+  // Create messages in the chat
+  await prisma.message.create({
     data: {
-      text: "Hello, this is Alice!",
+      text: "Hello, Bob! This is Alice.",
       chat: { connect: { id: chat.id } },
       user: { connect: { id: alice.id } },
     },
   });
 
-  const message2 = await prisma.message.create({
+  await prisma.message.create({
     data: {
       text: "Hi, Alice! This is Bob.",
       chat: { connect: { id: chat.id } },
