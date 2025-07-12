@@ -1,5 +1,6 @@
+import Friends from "@/components/Friends";
 function page() {
-  return <div>friends</div>;
+  return <Friends />;
 }
 
 export default page;

@@ -24,7 +24,6 @@ const Conversations = ({ onSelect }) => {
 
         const data = await res.json();
         setConversations(data);
-        console.log("Conversations fetched:", data);
       } catch (err) {
         console.error("Error fetching conversations:", err);
         setError("Failed to load conversations.");
