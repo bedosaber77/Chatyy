@@ -2,18 +2,20 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import loading from "../app/loading";
 import { UserPhoto } from "./userPhoto";
 
-const Conversations = ({ onSelect }) => {
+const Conversation = () => {
   const { data: session, status } = useSession();
   const [conversations, setConversations] = useState([]);
   const [error, setError] = useState(null);
   const [stillloading, setLoading] = useState(true);
   const hasFetched = useRef(false);
+  const router = useRouter();
 
   const handleChatSelection = (chatId, chatName, chatImg) => {
-    onSelect(chatId, chatName, chatImg);
+    router.push(`/conversations/${chatId}`);
   };
 
   useEffect(() => {
@@ -21,7 +23,6 @@ const Conversations = ({ onSelect }) => {
       try {
         const res = await fetch(`/api/conversation?userId=${session.user.id}`);
         if (!res.ok) throw new Error("Failed to fetch conversations");
-
         const data = await res.json();
         setConversations(data);
       } catch (err) {
@@ -54,9 +55,9 @@ const Conversations = ({ onSelect }) => {
             <button
               key={chat.id}
               className="p-4 text-left hover:bg-gray-100 border-b flex flex-row items-center gap-4"
-              onClick={() => {
-                handleChatSelection(chat.id, chat.name, chat.image);
-              }}
+              onClick={() =>
+                handleChatSelection(chat.id, chat.name, chat.image)
+              }
             >
               <UserPhoto img={chat.image} />
               <div className="flex flex-col">
@@ -73,4 +74,4 @@ const Conversations = ({ onSelect }) => {
   );
 };
 
-export default Conversations;
+export default Conversation;
