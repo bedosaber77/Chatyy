@@ -47,3 +47,53 @@ export async function GET(req, { params }) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+export async function POST(req, { params }) {
+  try {
+    const { userId } = await params;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const { friendEmail } = await req.json();
+
+    console.log("mail", friendEmail);
+
+    const friend = await prisma.user.findUnique({
+      where: { email: friendEmail },
+    });
+
+    if (!friend) {
+      return NextResponse.json(
+        { error: "Friend ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Add friend request
+    const updatedUser = await prisma.user.update({
+      where: { id: friend.id },
+      data: {
+        friendRequests: {
+          push: userId,
+        },
+      },
+    });
+
+    return NextResponse.json(
+      { message: "Friend request sent successfully", user: updatedUser },
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error sending friend request:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
