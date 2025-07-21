@@ -24,12 +24,19 @@ model User {
   friendRequests String[]   @db.ObjectId // Array of pending friend request user IDs
   messages       Message[]
   chatUsers      ChatUser[] // Explicit join relation
+
+  // Index for friend lookups
+  @@index([friends])
+  @@index([friendRequests])
 }
 
 model Chat {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
   messages  Message[]
   chatUsers ChatUser[] // Explicit join relation
+
+  // Index for chat creation time if you query by date
+  @@index([id])
 }
 
 model Message {
@@ -42,6 +49,13 @@ model Message {
 
   user   User   @relation(fields: [userId], references: [id])
   userId String @db.ObjectId
+
+  // CRITICAL: Index for getting latest messages per chat
+  @@index([chatId, createdAt(sort: Desc)])
+  // Index for user's messages
+  @@index([userId, createdAt(sort: Desc)])
+  // Index for chat messages only
+  @@index([chatId])
 }
 
 // Explicit join table for many-to-many relation between User and Chat
@@ -55,4 +69,8 @@ model ChatUser {
   chatId String @db.ObjectId
 
   @@unique([userId, chatId])
+  // CRITICAL: Index for finding user's conversations
+  @@index([userId])
+  // Index for finding chat participants
+  @@index([chatId])
 }
