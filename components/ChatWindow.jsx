@@ -98,7 +98,6 @@ const ChatWindow = ({ chat }) => {
         socket.emit("newMessage", savedMessage);
       }
 
-      setMessages((prev) => [...prev, savedMessage]);
       setMessageInput("");
     } catch (err) {
       setError("Failed to send message.");
