@@ -29,7 +29,7 @@ const ChatWindow = ({ chat }) => {
   useEffect(() => {
     if (!chatId) return;
 
-    socket = io("http://localhost:4000");
+    socket = io(process.env.NEXT_PUBLIC_SOCKET_URL);
 
     socket.on("newMessage", (msg) => {
       if (msg.chatId === chatId) {

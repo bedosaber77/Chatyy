@@ -38,7 +38,7 @@ const Conversation = () => {
       setLoading(true);
       fetchConversations();
     }
-  }, [session]);
+  });
 
   if (status === "loading" || stillloading) return loading();
 
