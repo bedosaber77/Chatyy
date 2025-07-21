@@ -26,10 +26,13 @@ const ChatWindow = ({ chat }) => {
   const { chatId, chatName, chatImg } = chat;
 
   // Socket connection
-  useEffect(() => {
-    if (!chatId) return;
+  const socketRef = useRef(null);
 
-    socket = io(process.env.NEXT_PUBLIC_SOCKET_URL);
+  useEffect(() => {
+    if (!chatId || socketRef.current) return;
+
+    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL);
+    const socket = socketRef.current;
 
     socket.emit("joinRoom", chatId);
 
@@ -40,9 +43,8 @@ const ChatWindow = ({ chat }) => {
     });
 
     return () => {
-      if (socket) {
-        socket.disconnect();
-      }
+      socket.disconnect();
+      socketRef.current = null;
     };
   }, [chatId]);
 
@@ -94,8 +96,8 @@ const ChatWindow = ({ chat }) => {
 
       const savedMessage = await res.json();
 
-      if (socket && socket.connected) {
-        socket.emit("newMessage", savedMessage);
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit("newMessage", savedMessage);
       }
 
       setMessageInput("");
