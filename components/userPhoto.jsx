@@ -8,7 +8,7 @@ export function UserPhoto({ img }) {
   const src = img || session?.user?.image || "/default-avatar.png";
 
   return (
-    <Image
+    <img
       src={src}
       alt="User Avatar"
       width={32}
