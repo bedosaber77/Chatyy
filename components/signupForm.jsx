@@ -10,28 +10,51 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 
-export function LoginForm({ className, ...props }) {
+export function SignupForm({ className, ...props }) {
   const router = useRouter();
-  const [email, setemail] = useState("");
-  const [password, setpassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [userName, setUserName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
 
-  const handleLogin = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    if (result?.error) {
-      setError(result.error);
-    } else {
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, userName }),
+      });
+
+      if (!res.ok) {
+        const { error } = await res.json();
+        setError(error || "Signup failed");
+        return;
+      }
+
+      await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
       router.push("/conversations");
+    } catch (err) {
+      setError("Something went wrong");
     }
   };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form>
+      <form onSubmit={handleSignup}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2">
             <a
@@ -42,11 +65,11 @@ export function LoginForm({ className, ...props }) {
                 <GalleryVerticalEnd className="size-6" />
               </div>
             </a>
-            <h1 className="text-xl font-bold">Welcome to Chatyy</h1>
+            <h1 className="text-xl font-bold">Create your account</h1>
             <div className="text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" className="underline underline-offset-4">
-                Sign up
+              Already have an account?{" "}
+              <Link href="/login" className="underline underline-offset-4">
+                Login
               </Link>
             </div>
           </div>
@@ -63,20 +86,39 @@ export function LoginForm({ className, ...props }) {
                 type="email"
                 placeholder="m@example.com"
                 required
-                onChange={(e) => setemail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
               />
+              <Label htmlFor="userName">User Name</Label>
+              <Input
+                id="userName"
+                type="userName"
+                placeholder="User Name"
+                required
+                onChange={(e) => setUserName(e.target.value)}
+              />
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="Password"
                 required
-                onChange={(e) => setpassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Confirm Password"
+                required
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full" onClick={handleLogin}>
-              Login
+            <Button type="submit" className="w-full">
+              Sign Up
             </Button>
           </div>
+
           <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
             <span className="relative z-10 bg-background px-2 text-muted-foreground">
               Or
