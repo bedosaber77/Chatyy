@@ -31,6 +31,8 @@ const ChatWindow = ({ chat }) => {
 
     socket = io(process.env.NEXT_PUBLIC_SOCKET_URL);
 
+    socket.emit("joinRoom", chatId);
+
     socket.on("newMessage", (msg) => {
       if (msg.chatId === chatId) {
         setMessages((prev) => [...prev, msg]);
