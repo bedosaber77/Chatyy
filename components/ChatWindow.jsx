@@ -99,7 +99,7 @@ const ChatWindow = ({ chat }) => {
       const savedMessage = await res.json();
 
       if (socketRef.current && socketRef.current.connected) {
-        socketRef.current.emit("newMessage", savedMessage);
+        socketRef.current.emit("sendMessage", savedMessage);
       }
 
       setMessageInput("");
