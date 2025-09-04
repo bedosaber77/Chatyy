@@ -31,7 +31,9 @@ const ChatWindow = ({ chat }) => {
   useEffect(() => {
     if (!chatId || socketRef.current) return;
 
-    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL);
+    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL,{
+      transports: ["websocket"],
+    });
     const socket = socketRef.current;
 
     socket.emit("joinRoom", chatId);
